@@ -48,6 +48,9 @@ To make it clear how this effects the general structure of the system, consider 
 
 However, we recommend symlinking `~/.config` to `/ctrl/$USER/` instead to make it easier to, say, backup all a users files.
 
+## Alternate Approach
+
+Instead of having new `ctrl` and `data` directories, we could void the rule the `usr` be read-only and instead make `usr/all/data` be read-only. Then `/usr/all/etc` and `/usr/all/var` could be used.
 
 ## Vendor Centricity
 
