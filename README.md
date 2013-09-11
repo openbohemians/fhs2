@@ -7,58 +7,63 @@ We can divide the improvements into two layers: *User Centric* and *Vendor Centr
 
 ## User Centricity
 
-To make the system *user centric*, the pertinent root directories are divided between users (and user groups), in the same fashion as `home`. For example, if we had two users, `tom` and `mary`, then the `etc` directory would be subdivided as follows:
+To make the system *user centric*, first `usr` is renamed `idx` (better name?). Then `usr` is repurposed for use as the per-user store, in place of `home`.
 
-    /etc/
+For example, if we had two users, `tom` and `mary`, then the `usr` directory would be subdivided as follows:
+
+    /usr/
       all/
       tom/
-      mary/
+      mar/
 
-Unfortunately, in order to maintain backward compatibility, we cannot use `etc` in this manner because too many applications are preset to use `etc` and would thus not be able to utilize `/etc/all` in its place. So we have to use a different directory, in the case of `etc` will be caledl `ctrl`, and symlink `ln -s /ctrl/all /etc`.
+Each pertinent root directory is linked the `usr/all/{dir}`. So we have:
 
-Similarly, we must do the same with `var`, which is mapped to `data`.
-
-So we have:
-
-    /ctrl
-    /data
-    /home
-    /tmp
-    /etc -> /ctrl/all
-    /var -> /data/all
-
-And each of the main directories follow that same user-centric subdivisions, e.g.
-
-    /ctrl/
+    /usr/
       all/
-      mary/
-      tom/
-    /data/
-      ...
+        etc
+        tmp
+        var
+    /etc -> /usr/all/etc
+    /tmp -> /usr/all/tmp
+    /var -> /usr/all/var
+
+The `home` directory can be left as is, or rerouted via `usr`.
+
     /home/
-      ...
-    /tmp/
-      ...
-
-It is not necessary to have an alternate `tmp` directory to link to the `all` entry, as we have done with `etc` and `var` b/c in the case of tmp, it does not matter so much. Nonetheless we recommend using `/tmp/all` and `/tmp/$USER` instead of `tmp` in applications.
+      tom -> /usr/tom/home
+    /usr/
+      tom/
+        home
 
 To make it clear how this effects the general structure of the system, consider how it would alter XDG Base Directory environment variables.
 
-    $XDG_CONFIG_HOME="/ctrl/$USER/"
-    $XDG_DATA_HOME="/data/$USER/"
-    $XDG_CACHE_HOME="/tmp/$USER"
+    $XDG_CONFIG_HOME="/usr/$USER/home"
+    $XDG_CACHE_HOME="/usr/$USER/tmp"
+    $XDG_DATA_HOME="/usr/$USER/data"
+    
+However, we recommend symlinking `~/.config` to `/usr/$USER/etc` and `~/.cache` to `/usr/$USER/tmp` to be on the safe side.
 
-However, we recommend symlinking `~/.config` to `/ctrl/$USER/` instead to make it easier to, say, backup all a users files.
+NOTE: If for backward compatability repurposing `usr` is not acceptable, then we just need to use a different name, e.g. `user`.
 
 
 ## Vendor Centricity
 
-The second layer of FHS++ is the organization of software installation.
-An additional directory called `org` is added to the root directory. Where `org` is the location of programs subdivided into vendors. (The name `org` comes from [objectroot](http://objectroot.org), we are open to suggestions for a better one, maybe `pkg`?) 
+The second layer of FHS++ is the organization of software installation. This can proceed in one of two ways depending on feasability.
 
-In this design, `usr` becomes the equivalent of GoboLinux's `Links` and/or `Index` directories. It stores symlinks to files in `org`, and unionfs is used with it to do safe installs. Read [A UnionFS-based Package System](http://www.linuxfromscratch.org/hints/downloads/files/pkg_unionfs.txt).
+An additional directory called `org` is added either to the root directory or to each `usr` directory, where `usr/all/org`. Where `org` is the location of programs subdivided into vendors. (The name `org` comes from [objectroot](http://objectroot.org), we are open to suggestions for a better one, maybe `pkg`?) 
 
-The `org` directory too might be sub-divided into users, with system-wide installs being placed under `/org/all`. However, it might be the exception *if* it is possible to allow users to securely install software into a shared location and still finely control access rights. (Is it?)
+Whether the `org` directory is divyed up or a single entry in root depends on whether it is possible to allow users to securely install software into a shared location and still finely control access rights. (Is it?)
+In either case a per-user `link` directory is available so that personal variation of packages can be installed.
+
+In this design, `link` becomes the equivalent of GoboLinux's `Links` and `Index` directories. It stores symlinks to files in `org`, and unionfs is used with it to do safe installs. Read [A UnionFS-based Package System](http://www.linuxfromscratch.org/hints/downloads/files/pkg_unionfs.txt).
+
+The procedure for installing software is outlined as follows:
+
+1. Create an entry for the program under `org/{vendor}/{name}/{version}`. Optionally the version can have an appended build hash, e.g. `1.1.0--A45211BF`.
+2. Create a unionfs of the program's directory overlaying `/usr/all/link` or `/usr/$USER/link` as appropriate.
+3. Install package using distribution tool (apt-get), or manually (make) ensuring to install to `usr/all/link` or `usr/$USER/link`.
+4. Unmount unionfs.
+5. Symlink entries from program's `org` directory to link location.
 
 
 ## Closing Statements
