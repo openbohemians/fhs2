@@ -14,9 +14,9 @@ To make the system *user centric*, the pertinent root directories are divided be
       tom/
       mary/
 
-However, in order to maintain backward compatibility however, we cannot use `etc` in this manner because too many applications are preset to use `etc` and would thus not be able to utilize `/etc/all` in its place. So we have to use a different directory, in the case of `etc` will be caledl `ctrl`, and symlink `ln -s /ctrl/all /etc`.
+Unfortunately, in order to maintain backward compatibility, we cannot use `etc` in this manner because too many applications are preset to use `etc` and would thus not be able to utilize `/etc/all` in its place. So we have to use a different directory, in the case of `etc` will be caledl `ctrl`, and symlink `ln -s /ctrl/all /etc`.
 
-Similarly, we must do the same with `var`, which is mapped to `/data/all`.
+Similarly, we must do the same with `var`, which is mapped to `data`.
 
 So we have:
 
@@ -34,11 +34,13 @@ And each of the main directories follow that same user-centric subdivisions, e.g
       mary/
       tom/
     /data/
-      ... ditto ...
+      ...
     /home/
-      ... ditto ...
+      ...
+    /tmp/
+      ...
 
-We do not worry about have an alternate `tmp` directory to link to the `all` entry, as we have done with `etc` and `var` b/c in the case of tmp, it does not matter so much. Nonetheless we recommend using `/tmp/all` and `/tmp/$USER` instead of `tmp` in applications.
+It is not necessary to have an alternate `tmp` directory to link to the `all` entry, as we have done with `etc` and `var` b/c in the case of tmp, it does not matter so much. Nonetheless we recommend using `/tmp/all` and `/tmp/$USER` instead of `tmp` in applications.
 
 To make it clear how this effects the general structure of the system, consider how it would alter XDG Base Directory environment variables.
 
@@ -48,16 +50,13 @@ To make it clear how this effects the general structure of the system, consider 
 
 However, we recommend symlinking `~/.config` to `/ctrl/$USER/` instead to make it easier to, say, backup all a users files.
 
-## Alternate Approach
-
-Instead of having new `ctrl` and `data` directories, we could void the rule the `usr` be read-only and instead make `usr/all/data` be read-only. Then `/usr/all/etc` and `/usr/all/var` could be used.
 
 ## Vendor Centricity
 
 The second layer of FHS++ is the organization of software installation.
 An additional directory called `org` is added to the root directory. Where `org` is the location of programs subdivided into vendors. (The name `org` comes from [objectroot](http://objectroot.org), we are open to suggestions for a better one, maybe `pkg`?) 
 
-In this design, `usr` becomes the equivalent of Gobolinux's `Links` and/or `Index` directories. It stores symlinks to files in `org`, and unionfs is used with it to do safe installs. Read [A UnionFS-based Package System](http://www.linuxfromscratch.org/hints/downloads/files/pkg_unionfs.txt).
+In this design, `usr` becomes the equivalent of GoboLinux's `Links` and/or `Index` directories. It stores symlinks to files in `org`, and unionfs is used with it to do safe installs. Read [A UnionFS-based Package System](http://www.linuxfromscratch.org/hints/downloads/files/pkg_unionfs.txt).
 
 The `org` directory too might be sub-divided into users, with system-wide installs being placed under `/org/all`. However, it might be the exception *if* it is possible to allow users to securely install software into a shared location and still finely control access rights. (Is it?)
 
