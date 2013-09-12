@@ -50,24 +50,23 @@ Repurposing `usr` in this way might seem like a fools errand since it would brea
 
 ## Vendor Centricity
 
-The second layer of FHS++ is the organization of software installation. This can proceed in one of two ways depending on feasability.
+The second layer of FHS++ is the organization of software installation. 
 
-An additional directory called `app` is added either to the root directory or to each `usr` directory, where `usr/all/org`. Where `org` is the location of programs subdivided into vendors. (The idea for `app` comes from [objectroot](http://objectroot.org)'s `org`).
+An additional directory called `app` is added to each `usr` directory, where `usr/all/app` is the location for softwares shared by all users. The `app` directoires are the location of programs subdivided into vendors. (The idea for `app` comes from [objectroot](http://objectroot.org)'s `org`).
 
-Whether the `app` directory is divyed up or a single entry in root depends on whether it is possible to allow users to securely install software into a shared location and still finely control access rights. (Is it?)
-In either case a per-user `link` directory is available so that personal variation of packages can be installed.
-
+Then a per-user `link` directory is available so that personal variation of packages can be installed.
 In this design, `link` becomes the equivalent of GoboLinux's `Links` and `Index` directories. It stores symlinks to files in `org`, and unionfs is used with it to do safe installs. Read [A UnionFS-based Package System](http://www.linuxfromscratch.org/hints/downloads/files/pkg_unionfs.txt).
 
 The procedure for installing software is outlined as follows:
 
-1. Create an entry for the program under `org/{vendor}/{name}/{version}`. Optionally the version can have an appended build hash, e.g. `1.1.0--A45211BF`.
-2. Create a unionfs of the program's directory overlaying `/usr/all/link` or `/usr/$USER/link` as appropriate.
-3. Chroot to /usr/all/link.
-4. Install package using distribution tool (apt-get), or manually using (make).
+1. Create an entry for the program under `app/{vendor}/{name}/{version}`. If the app already exists but has variant build  configuration then the version can be appended with a build hash, e.g. `1.1.0--A45211BF`.
+2. Create a unionfs of the program's directory overlaying `/usr/$USER/link` or `/usr/all/link` as appropriate.
+3. Configure a chroot jail out of the `link` driectory and then chroot to it.
+4. Install package via distribution tool (e.g. apt-get), or manually (e.g. make).
 5. Close chroot and unmount unionfs.
-6. Symlink entries from program's `app` directory to link location.
+6. Symlink entries from the application to the `link` directory.
 
+These steps would be handled automatically by a wrapper script around a target package tool. I am hopful we can use PackageKit to handle this is a universal fashion.
 
 ## Closing Statements
 
