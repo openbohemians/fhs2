@@ -4,36 +4,70 @@ An approach that offers significant improvements over FHS without radically alte
 
 We can divide the improvements into two layers: *User Centric* and *Vendor Centric* changes. We will look at each in turn.
 
+## System Centricity
 
+*WHAT ABOUT SIFFERENT HOSTS?*
+
+Most of the top level directories in the FHS standard are system centric locations.
+
+    boot
+    dev
+    mnt
+    proc
+    run
+    var
+    sys
+    
+A few others are also system centric, but have a more direct interface with users. With the exception of `root` they are all related to the software installed on a system.
+
+    bin
+    etc
+    lib
+    root
+    sbin
+    usr
+    
+Because FHS++ is user and vendor centric, it moves all of the first set into a single top level directory.
+
+    system/
+      boot/
+      dev/
+      mnt/
+      proc/
+      run/
+      var/
+      sys/
+
+To retain compatability with legacy systems, until such time as it is uncessary, each legacy directory is linked the corresponding system directory. eg,
+
+    /etc -> /system/etc
+    /tmp -> /system/tmp
+    /var -> /system/var
+   
+    
 ## User Centricity
 
-To make the system *user centric*, first we repurpose the `usr` directory back to its original intent for use as the per-user store, in lieu of `home`.
+In the current FHS, user directories fall under `home`. To make the standard *user centric*, we move those directories to the top level.
 
-For example, if we had two users, `tom` and `mary`, then the `usr` directory would be subdivided as follows:
+So, for example, if we had two users, `tom` and `mary`, then the root directory would be subdivided as follows:
 
-    /usr/
+    / 
+      admin/
       all/
       tom/
-      mar/
+      mary/
+      system/
 
-The `all` directory is create as a *user group* that is shared by all users. Each legacy root directory is linked the `usr/all/{dir}`. So we have:
+At first glance this will probably seem a bit *crazy*, as it would appear to make it impossible to mount user data to a separate partition -- the most common use of partiion separation. But in actuality it is not a problem. The technique for doing the same is simply reversed. Instead of mounting the root directory ('`/`') to a systems partition and `home/` to a secondary data partition, the the root directory is mapped to the data partition and `system/` is mapped to the systems partition. With advances is OS design this is quite doable, and has actually been so for a while.
 
-    /usr/
-      all/
-        etc
-        tmp
-        var
-    /etc -> /usr/all/etc
-    /tmp -> /usr/all/tmp
-    /var -> /usr/all/var
+The `all` directory is a *user group* that is shared by all users. 
 
 The `home` directory can be left as is, or rerouted via `usr` as well.
 
     /home/
       tom -> /usr/tom/home
-    /usr/
-      tom/
-        home
+    /tom/
+      home
 
 Of course it is not necessary to make these links from `home` since we can just adjust the `passwd` directory and $HOME environment variable. Then `home` can be removed.
 
