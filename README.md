@@ -65,7 +65,7 @@ The `all` directory is a *user group* that is shared by all users.
 The `home` directory can be left as is, or rerouted via `usr` as well.
 
     /home/
-      tom -> /usr/tom/home
+      tom -> /tom/home
     /tom/
       home
 
@@ -73,23 +73,21 @@ Of course it is not necessary to make these links from `home` since we can just 
 
 To make it clear how this effects the general structure of the system, consider how it would alter XDG Base Directory environment variables.
 
-    $XDG_CONFIG_HOME="/usr/$USER/home"
-    $XDG_CACHE_HOME="/usr/$USER/tmp"
-    $XDG_DATA_HOME="/usr/$USER/data"  (or var?)
+    $XDG_CONFIG_HOME="/$USER/home"
+    $XDG_CACHE_HOME="/$USER/tmp"
+    $XDG_DATA_HOME="/$USER/data"  (or var?)
     
-However, we recommend symlinking `~/.config` to `/usr/$USER/etc` and `~/.cache` to `/usr/$USER/tmp` to be on the safe side.
-
-Repurposing `usr` in this way might seem like a fools errand since it would break every packaging system in use, but this problem is solved in the next section. So read on.
+However, we recommend symlinking `~/.config` to `/$USER/etc` and `~/.cache` to `/$USER/tmp` to be on the safe side.
 
 
 ## Vendor Centricity
 
 The second layer of FHS++ is the organization of software installation. 
 
-An additional directory called `app` is added to each `usr` directory, where `usr/all/app` is the location for softwares shared by all users. The `app` directoires are the location of programs subdivided into vendors. (The idea for `app` comes from [objectroot](http://objectroot.org)'s `org`).
+An additional directory called `app` is added to each users directory, where `all/app` is the location for softwares shared by all users. The `app` directoires are the location of programs subdivided into vendors. (The idea for `app` comes from [objectroot](http://objectroot.org)'s `org`).
 
 Then a per-user `link` directory is available so that personal variation of packages can be installed.
-In this design, `link` becomes the equivalent of GoboLinux's `Links` and `Index` directories. It stores symlinks to files in `org`, and unionfs is used with it to do safe installs. Read [A UnionFS-based Package System](http://www.linuxfromscratch.org/hints/downloads/files/pkg_unionfs.txt).
+In this design, `link` becomes the equivalent of GoboLinux's `Links` and `Index` directories. It stores symlinks to files in `app`. Potentially unionfs can be used with it to do safe installs. Read [A UnionFS-based Package System](http://www.linuxfromscratch.org/hints/downloads/files/pkg_unionfs.txt).
 
 The procedure for installing software is outlined as follows:
 
@@ -100,10 +98,11 @@ The procedure for installing software is outlined as follows:
 5. Close chroot and unmount unionfs.
 6. Symlink entries from the application to the `link` directory.
 
-These steps would be handled automatically by a wrapper script around a target package tool. I am hopful we can use PackageKit to handle this is a universal fashion.
+These steps would be handled automatically by a wrapper script around a target package tool. (Can we can use PackageKit to handle this is a universal fashion?)
+
 
 ## Closing Statements
 
-This new hierarchy sits fits well with the current FHS, the addition of `sys`, `dev` and `proc` etc., would not stand out in the least, and thus not require anything like the GoboHide kernel patch. This design might not bring with it the beauty of Gobolinux' design, but it does have most, if not all of, the technical merits.
+This new hierarchy fits well with the current FHS, the addition of `sys`, `dev` and `proc` etc., would not stand out in the least, and thus not require anything like the GoboHide kernel patch. This design might not bring with it the beauty of Gobolinux' design, but it does have most, if not all of, the technical merits.
 
 
